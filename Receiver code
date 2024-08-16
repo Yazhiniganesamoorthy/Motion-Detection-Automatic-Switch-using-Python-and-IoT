@@ -1,0 +1,67 @@
+#include <ESP8266WiFi.h>
+#include <ThingSpeak.h>
+
+const char *ssid = "Vimal";  // Add closing double-quote
+const char *password = "vimal2005";  // Add closing double-quote
+const char *api_key = "AYCBNL23D9IMCFQJ";  // Replace with your Read API Key
+const unsigned long channelID = 2421538;  // Replace with your ThingSpeak Channel ID
+
+const int ledPin = D2;  // Define the pin connected to the LED
+
+WiFiClient client;  // Create a WiFiClient object
+
+bool personDetected = false;
+unsigned long startTime;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Initialize ThingSpeak
+  ThingSpeak.begin(client);
+}
+
+void loop() {
+  // Read ThingSpeak data
+  int personDetectionStatus = ThingSpeak.readLongField(channelID, 1, api_key);
+  float powerConsumption = ThingSpeak.readFloatField(channelID, 2, api_key);
+  // Add similar lines to read data for Power Saving (Field 3) and Person Availability Time (Field 4)
+
+  // Control the LED based on the person detection status
+  if (personDetectionStatus == 1) {
+    digitalWrite(ledPin, HIGH);  // Turn on the LED
+    Serial.println("LED turned ON");
+    personDetected = true;
+    startTime = millis();  // Start measuring time
+  } else {
+    digitalWrite(ledPin, LOW);  // Turn off the LED
+    Serial.println("LED turned OFF");
+    if (personDetected) {
+      unsigned long elapsedTime = millis() - startTime;
+
+      // Perform actions with powerConsumption, Power Saving, and Person Availability Time
+      // ...
+
+      Serial.print("Power Consumption: ");
+      Serial.print(powerConsumption);
+      Serial.println(" Wh");
+
+      Serial.print("Time Person Detected: ");
+      Serial.print(elapsedTime);
+      Serial.println(" ms");
+
+      Serial.println("Data Received from ThingSpeak");
+      personDetected = false;
+    }
+  }
+
+  delay(5000);  // Adjust the delay as needed
+}
